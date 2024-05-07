@@ -2,8 +2,10 @@
 #define ACTUATORS_IN1 6                     // Input 1 for the actuator driver
 #define ACTUATORS_IN2 5                     // Input 2 for the actuator driver 
 #define EMG_PIN A0                          // EMG sensor ping
+#define EMG_THRESHOLD 20.46                 // Threshold to close hand before converting to milli volts
 #define EMG_TO_ACTUATOR_SPEED 255/1023      // Convert EMG to actuator speed
-#define EMG_THRESHOLD 20.46                 // EMG Threshold to close hand
+#define EMG_TO_MV 5/1023*1000               // Convert EMG to milli volts
+#define AMPLIFY_SPEED 12                    // Hand moves slow, amplify it by hardcoded value
 
 double EMG_Curr = 0.0;                      // Current EMG Reading
 double EMG_Prev = 0.0;                      // Previous EMG reading
@@ -18,7 +20,7 @@ void setup() {
   Serial.begin(9600);
 
   // Initialize actuator speed to max
-  digitalWrite(ACTUATOR_DRIVER, 255);
+  digitalWrite(ACTUATOR_DRIVER, HIGH);
 
   // Get initial EMG value
   delay(1000);
@@ -26,14 +28,14 @@ void setup() {
 }
 
 void loop() {
-  // EMG Range between 0 - 1023
+  // EMG range = 0 to 1023
   EMG_Prev = EMG_Curr;
   EMG_Curr = analogRead(EMG_PIN);
 
-  // Actuator speed range = 0 to 255
-  actuator_speed = abs(EMG_Prev - EMG_Curr) * EMG_TO_ACTUATOR_SPEED;
+  // Convert EMG to Actuator speed and amplify its value (base actuator speed range: 0 to 255)
+  actuator_speed = abs(EMG_Prev - EMG_Curr) * EMG_TO_ACTUATOR_SPEED * AMPLIFY_SPEED;
 
-  Serial.println("EMG Value: " + String(EMG_Curr) + " Actuator Speed: " + String(actuator_speed));
+  Serial.println("EMG Value: " + String(EMG_Curr * EMG_TO_MV) + "mV\n Actuator Speed: " + String(actuator_speed));
 
   // Close hand
   if(EMG_Curr >= EMG_THRESHOLD){
